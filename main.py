@@ -85,7 +85,7 @@ if st.button("▶ AIベクトル分析スタート") and full_text:
     with st.spinner("🤖 AIがあなたのトークをベクトル解析中です...しばらくお待ちください！"):
         # 解析中演出をリアルに見せるために一瞬ウェイトを入れる（任意）
         # import time  # ファイルの最上部にこれを書いておく
-        # time.sleep(2)
+        time.sleep(2)
 
         gpt_output = call_gpt_raw_log(full_text)
 
