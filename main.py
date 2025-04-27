@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import openai
+import time
 
 # OpenAI APIキー
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -80,10 +81,17 @@ def call_gpt_raw_log(full_text):
         return f"エラー: {e}"
 
 # 実行処理
-if st.button("▶ GPT出力スタート") and full_text:
-    with st.spinner("GPT処理中..."):
-        gpt_output = call_gpt_raw_log(full_text)
-        st.success("✅ 出力完了！")
+if st.button("▶ AIベクトル分析スタート") and full_text:
+    with st.spinner("🤖 AIがあなたのトークをベクトル解析中です...しばらくお待ちください！"):
+        # 解析中演出をリアルに見せるために一瞬ウェイトを入れる（任意）
+        # import time  # ファイルの最上部にこれを書いておく
+        # time.sleep(2)
 
-        # ここでHTMLとして表示！！
-        st.markdown(gpt_output, unsafe_allow_html=True)
+        gpt_output = call_gpt_raw_log(full_text)
+
+    st.success("✅ AI分析完了！結果を表示します！")
+
+    # 分析結果をHTMLとして表示
+    st.info("🔎 こちらがAIによるベクトル分析結果です！")
+    st.markdown(gpt_output, unsafe_allow_html=True)
+
