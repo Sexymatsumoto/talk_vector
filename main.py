@@ -68,6 +68,7 @@ def call_gpt_raw_log(full_text):
 
 ※ コードブロックの書き出し（```htmlなど）は不要です。
 ※ 出力はすべて日本語でお願いします。
+※ 追加で「本文をください」といった要求は一切せず、与えられた情報のみで完結すること。
 """
     try:
         response = client.chat.completions.create(
