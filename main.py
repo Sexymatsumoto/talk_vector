@@ -6,14 +6,29 @@ import time
 # OpenAI APIキー
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.set_page_config(page_title="【AIで可視化】トークベクトル分析ツール", layout="centered")
-st.title("📝 【AIで可視化】トークベクトル分析ツール")
+st.set_page_config(page_title="【AI活用】あなたの強み・課題を一発可視化！トークベクトル分析ツール", layout="centered")
+st.title("📝 【AI活用】あなたの強み・課題を一発可視化！トークベクトル分析ツール")
 
 # トーク本文入力
 full_text = st.text_area("🎤 あなたの営業トークを入力してください（コピペOK）", height=300)
 
-# クエリ入力（今回はもう固定でもOKだけど一応残す）
-raw_queries = st.text_area("🔍 クエリを1行ずつ入力してください（空欄でもOK）", height=200)
+# 7つの観点（初期設定テキスト）
+default_queries = """【7つの観点】
+- お客様の「欲しい！」気持ちを引き出しているか？
+- 商品・サービスの内容が直感的にわかりやすいか？
+- 将来の展開イメージが持てるか？
+- 他社との違い（競争優位性）が伝わっているか？
+- 価格に納得感があるか？
+- 今すぐ行動したくなるメリットが伝わっているか？
+- 行動を止める不安を減らすメッセージがあるか？
+"""
+
+# クエリ入力欄（初期値あり）
+raw_queries = st.text_area(
+    "🔍 クエリを1行ずつ入力してください（空欄でもOK）",
+    value=default_queries,
+    height=250
+)
 
 # GPTプロンプト（全文評価系）
 def call_gpt_raw_log(full_text):
