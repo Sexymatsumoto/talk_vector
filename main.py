@@ -6,8 +6,8 @@ import time
 # OpenAI APIキー
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.set_page_config(page_title="トークベクトル分析ツール", layout="centered")
-st.title("📝 トークベクトル分析ツール")
+st.set_page_config(page_title="【AIで可視化】トークベクトル分析ツール", layout="centered")
+st.title("📝 AIで可視化するトークベクトル分析ツール")
 
 # トーク本文入力
 full_text = st.text_area("🎤 あなたの営業トークを入力してください（コピペOK）", height=300)
