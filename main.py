@@ -67,11 +67,36 @@ if st.button("▶ GPT出力スタート") and full_text:
 
         for query in queries:
             gpt_output = call_gpt_raw_log(query, full_text)
-            results.append({
-                "クエリ": query,
-                "AI改善提案ノート": gpt_output
-            })
+    # ここでgpt_outputを3つに分割する
+    try:
+        # 各項目ごとに行頭を探して分割
+        evaluation = ""
+        weak_point = ""
+        strong_point = ""
 
+        lines = gpt_output.splitlines()
+        for line in lines:
+            if line.startswith("1."):
+                evaluation = line[2:].strip()
+            elif line.startswith("2."):
+                weak_point = line[2:].strip()
+            elif line.startswith("3."):
+                strong_point = line[2:].strip()
+
+        results.append({
+            "クエリ": query,
+            "評価（◎○△＋理由）": evaluation,
+            "特に補強すべきポイント": weak_point,
+            "伸ばすべき強み": strong_point
+        })
+
+    except Exception as e:
+        results.append({
+            "クエリ": query,
+            "評価（◎○△＋理由）": "エラー",
+            "特に補強すべきポイント": "エラー",
+            "伸ばすべき強み": "エラー"
+        })
         df = pd.DataFrame(results)
         st.success("✅ 出力完了！")
         st.dataframe(df)
