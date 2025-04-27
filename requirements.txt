@@ -1,0 +1,12 @@
+streamlit
+openai>=1.0.0
+pandas
+torch
+sentence-transformers
+beautifulsoup4
+matplotlib
+seaborn
+plotly
+chardet
+numpy
+scikit-learn
