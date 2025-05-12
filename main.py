@@ -96,7 +96,7 @@ if st.button("▶ AIベクトル分析スタート") and full_text:
         # import time  # ファイルの最上部にこれを書いておく
         time.sleep(2)
 
-        gpt_output = call_gpt_raw_log(full_text)
+        gpt_output = call_gpt_raw_log(full_text, raw_queries)
 
     st.success("✅ AI分析完了！結果を表示します！")
 
