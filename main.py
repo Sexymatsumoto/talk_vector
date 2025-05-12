@@ -1,19 +1,27 @@
 import streamlit as st
-import pandas as pd
 import openai
 import time
 
 # OpenAI APIキー
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.set_page_config(page_title="【AI活用】あなたの強み・課題を一発可視化！トークベクトル分析ツール", layout="centered")
-st.title("📝 【AI活用】あなたの強み・課題を一発可視化！トークベクトル分析ツール")
+st.set_page_config(page_title="AIトーク分析ツール", layout="centered")
+st.title("🧠 AIトーク分析ツール")
 
-# トーク本文入力
-full_text = st.text_area("🎤 あなたの営業トークを入力してください（コピペOK）", height=300)
+# -------------------------
+# 1. 用途選択
+# -------------------------
+mode = st.selectbox("🎯 分析用途を選んでください", ["営業トーク分析", "採用メッセージ分析"])
 
-# 7つの観点（初期設定テキスト）
-default_queries = """【7つの観点】
+# -------------------------
+# 2. トーク本文入力
+# -------------------------
+full_text = st.text_area("🎤 分析したい本文を入力してください", height=300)
+
+# -------------------------
+# 3. クエリ（評価観点）入力
+# -------------------------
+default_sales_queries = """【7つの観点】
 - お客様の「欲しい！」気持ちを引き出しているか？
 - 商品・サービスの内容が直感的にわかりやすいか？
 - 将来の展開イメージが持てるか？
@@ -23,84 +31,75 @@ default_queries = """【7つの観点】
 - 行動を止める不安を減らすメッセージがあるか？
 """
 
-# クエリ入力欄（初期値あり）
+default_recruit_queries = """【7つの観点】
+- 組織の雰囲気や文化が伝わっているか？
+- 仕事内容や役割がイメージしやすいか？
+- 他社との違いや独自性が明確か？
+- 成長やキャリアの可能性が示されているか？
+- 応募者にとってのメリットが伝わっているか？
+- 不安やリスクに対する配慮があるか？
+- 応募を後押しする呼びかけがあるか？
+"""
+
 raw_queries = st.text_area(
-    "🔍 クエリを1行ずつ入力してください（空欄でもOK）",
-    value=default_queries,
+    "🔍 評価観点を1行ずつ入力してください（空欄でもOK）",
+    value=default_sales_queries if mode == "営業トーク分析" else default_recruit_queries,
     height=250
 )
 
-# GPTプロンプト（全文評価系）
-def call_gpt_raw_log(full_text, raw_queries):
-    prompt = f"""
-あなたは営業トークのコンサルタントです。
+# -------------------------
+# 4. GPTコール関数
+# -------------------------
+def generate_prompt(text, queries, mode):
+    if mode == "営業トーク分析":
+        role = "営業トークのコンサルタント"
+        subject = "営業担当者が実際に行ったトーク内容"
+    else:
+        role = "採用ブランディングの専門家"
+        subject = "ある会社が求職者向けに発信した採用メッセージ"
 
-これから与える本文は、営業担当者が実際に行ったトーク内容です。  
-本文は十分な情報を含んでいると仮定し、追加で質問をすることなく、  
+    return f"""
+あなたは{role}です。
+
+これから与える本文は、{subject}です。
+本文は十分な情報を含んでいると仮定し、追加で質問をすることなく、
 与えられた情報だけをもとに分析と評価を行ってください。
 
 【評価指示】
-次の7つの観点ごとに、
-- ◎（非常に良い）／○（普通に良い）／△（改善の余地あり）
-で評価してください。
+次の観点ごとに、
+- ◎（非常に良い）／○（普通に良い）／△（改善の余地あり）で評価してください。
 
 また、各観点ごとに必ず
 - 本文中から具体的なフレーズや表現を引用して、どこを根拠に評価したか説明してください。
+該当が見つからない場合は、「本文には明確な該当表現がなかったが、〇〇というニュアンスから判断した」と記載してください。
 
-もし該当するフレーズが本文に見当たらない場合は、
-- 「本文には明確な該当表現がなかったが、〇〇というニュアンスから判断した」と記載してください。
+{queries}
 
-【7つの観点】
-{raw_queries}
-
-さらに、まとめとして
+最後に以下を出力してください：
 - 総合評価（◎／○／△）
 - 総合評価の理由（100字以内）
-- 総合評価に基づく具体的な改善アドバイス（150字以内＋できればサンプルトーク例を添える）
+- 改善アドバイス（150字以内＋例文があれば添える）
 
-【出力形式】
-出力形式は**HTMLテーブル**で、次のようにしてください。
-
-【HTML出力例】
-<table border="1" style="border-collapse:collapse;">
-<tr><th>観点</th><th>評価</th><th>根拠</th></tr>
-<tr><td>お客様の「欲しい！」気持ちを引き出しているか？</td><td>◎</td><td>「この美しさと薄さで映画館のような迫力体験を」などの表現が購買意欲を刺激しているため。</td></tr>
-<tr><td>商品・サービスの内容が直感的にわかりやすいか？</td><td>○</td><td>商品の機能説明はされているが、やや情報過多で整理されていないため。</td></tr>
-<tr><td>将来の展開イメージが持てるか？</td><td>△</td><td>利用シーンは想起できるが、未来像の具体例が少ないため。</td></tr>
-<tr><td>他社との違い（競争優位性）が伝わっているか？</td><td>○</td><td>「液晶テレビのパイオニア」という訴求で差別化が図られているため。</td></tr>
-<tr><td>価格に納得感があるか？</td><td>◎</td><td>値引きの説明はあるが、コストパフォーマンス訴求が弱いため。</td></tr>
-<tr><td>今すぐ行動したくなるメリットが伝わっているか？</td><td>○</td><td>「期間限定特典」などの要素はあるが、緊急性の演出が弱い。</td></tr>
-<tr><td>行動を止める不安を減らすメッセージがあるか？</td><td>△</td><td>購入後のサポートや保証についての言及が不足しているため。</td></tr>
-<tr><td>総合評価</td><td colspan="2">○</td></tr>
-<tr><td>総合評価の理由</td><td colspan="2">商品内容は明確だが、将来展開の具体性が不足している。</td></tr>
-<tr><td>改善アドバイス</td><td colspan="2">購入後のサポート体制や成功事例を示すトークを加えましょう。<br>例：「この商品はご購入後も3年間無料保証がついておりますので、安心してご利用いただけます。」</td></tr>
-</table>
-
-※ コードブロックの書き出し（```htmlなど）は不要です。
-※ 出力はすべて日本語でお願いします。
-※ 追加で「本文をください」といった要求は一切せず、与えられた情報のみで完結すること。
+出力形式はHTMLテーブルでお願いします。
 """
+
+def call_gpt(text, queries, mode):
+    prompt = generate_prompt(text, queries, mode)
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt + f"\n\n【本文】\n{text}"}]
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        return f"エラー: {e}"
+        return f"エラーが発生しました: {e}"
 
-# 実行処理
-if st.button("▶ AIベクトル分析スタート") and full_text:
-    with st.spinner("🤖 AIがあなたのトークをベクトル解析中です...しばらくお待ちください！"):
-        # 解析中演出をリアルに見せるために一瞬ウェイトを入れる（任意）
-        # import time  # ファイルの最上部にこれを書いておく
+# -------------------------
+# 5. 実行ボタン
+# -------------------------
+if st.button("▶ AI分析スタート") and full_text:
+    with st.spinner("AIが分析中です..."):
         time.sleep(2)
-
-        gpt_output = call_gpt_raw_log(full_text, raw_queries)
-
-    st.success("✅ AI分析完了！結果を表示します！")
-
-    # 分析結果をHTMLとして表示
-    st.info("🔎 こちらがAIによるベクトル分析結果です！")
-    st.markdown(gpt_output, unsafe_allow_html=True)
-
+        result = call_gpt(full_text, raw_queries, mode)
+    st.success("✅ 分析完了！")
+    st.markdown(result, unsafe_allow_html=True)
