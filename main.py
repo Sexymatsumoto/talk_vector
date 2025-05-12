@@ -81,6 +81,7 @@ def generate_prompt(text, queries, mode):
 - 改善アドバイス（150字以内＋例文があれば添える）
 
 出力形式はHTMLテーブルでお願いします。
+※出力のHTMLタグはすべてエスケープせずに、そのままの形式で出力してください。
 """
 
 def call_gpt(text, queries, mode):
